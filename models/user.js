@@ -16,12 +16,7 @@ const userSchema = new mongoose.Schema({
     maxlength: 255,
     required: true,
   },
-  about: {
-    type: String,
-    minlength: 2,
-    maxlength: 1000,
-    required: true,
-  },
+
   password: {
     type: String,
     required: true,
@@ -29,11 +24,6 @@ const userSchema = new mongoose.Schema({
     minlength: 8,
   },
 
-  dp: {
-    type: String,
-    maxlength: 255,
-    minlength: 5,
-  },
   is_admin: Boolean,
 });
 
@@ -42,7 +32,6 @@ userSchema.methods.generateAuthToken = function () {
     {
       _id: this._id,
       name: this.name,
-      about: this.about,
       email: this.email,
       is_admin: this.is_admin,
     },
@@ -56,7 +45,6 @@ const User = mongoose.model("User", userSchema);
 function validateUser(user) {
   const schema = Joi.object({
     name: Joi.string().min(2).max(50).required(),
-    about: Joi.string().min(2).max(1000),
     email: Joi.string().min(5).max(255).required().email(),
     password: Joi.string().min(5).max(255).required(),
     dp: Joi.string().min(5).max(255),
@@ -66,7 +54,6 @@ function validateUser(user) {
 function validateUpdateUser(user) {
   const schema = Joi.object({
     name: Joi.string().min(2).max(50).required(),
-    about: Joi.string().min(2).max(1000),
     dp: Joi.string().min(5).max(255),
   });
   return schema.validate(user);
