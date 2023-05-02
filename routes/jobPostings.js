@@ -50,27 +50,101 @@ router.delete("/:id", [auth], async (req, res) => {
   res.status(203).send("Job post is deleted");
 });
 
-router.post("/:id/sendInvitation", [auth], async (req, res) => {
-  const id = req.params.id;
-  const bidders = Bidder.find();
-  const jobPosting = await JobPosting.findById(id);
-  const matchedBidders = matchBidders(jobPosting, bidders); //demo
-  res
-    .status(203)
-    .send(
-      `Sending invitation for job:${jobPosting.title} to ${matchedBidders}`
-    );
-});
-
 router.post("/:id/bid", [auth], async (req, res) => {
   const id = req.params.id;
   const userId = req.user._id;
-  const bidders = Bidder.findById(userId);
-  res.status(203).send(`Bidding for job:${id} by ${bidders.user.name} `);
+  const bidder = await Bidder.findOne({
+    user: userId,
+    "invitationHistory.jobPostingId": id,
+    "invitationHistory.status": "Invited",
+  });
+  if (!bidder) return res.status(403).send("Bidder is not authorized");
+  res.status(203).send(`Bidding for job:${id} by ${bidder.user.name} `);
 });
 
-function matchBidders(jobPosting, bidders) {
-  return "ikram, khan, Inam";
+router.post("/:id/sendInvitation", [auth], async (req, res) => {
+  const jobId = req.params.id;
+
+  try {
+    // Retrieve the job posting and matched bidders
+    const jobPosting = await JobPosting.findById(jobId);
+    const matchedBidders = await getMatchedBidders(jobPosting);
+
+    // Sort the matched bidders based on their invitation history
+    const sortedBidders = sortBidders(matchedBidders);
+
+    // Send invitations in the specified sequence
+    await sendInvitations(sortedBidders.slice(0, 10), jobPosting);
+    await sendInvitations(sortedBidders.slice(10, 30), jobPosting);
+    await sendInvitations(sortedBidders.slice(30, 50), jobPosting);
+
+    res.status(200).send("Invitations sent successfully");
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error sending invitations");
+  }
+});
+
+async function getMatchedBidders(jobPosting) {
+  const matchedBidders = await Bidder.find({
+    $and: [
+      { skills: { $in: jobPosting.requirements } },
+      { preferences: { $in: jobPosting.requirements } },
+    ],
+  });
+  return matchedBidders;
 }
 
+function sortBidders(bidders) {
+  return bidders.sort((a, b) => {
+    const aLast30Days = a.invitationHistory.filter(
+      (inv) => Date.now() - inv.date <= 30 * 24 * 60 * 60 * 1000
+    ).length;
+    const bLast30Days = b.invitationHistory.filter(
+      (inv) => Date.now() - inv.date <= 30 * 24 * 60 * 60 * 1000
+    ).length;
+    const aLast2Months = a.invitationHistory.filter(
+      (inv) => Date.now() - inv.date <= 60 * 24 * 60 * 60 * 1000
+    ).length;
+    const bLast2Months = b.invitationHistory.filter(
+      (inv) => Date.now() - inv.date <= 60 * 24 * 60 * 60 * 1000
+    ).length;
+
+    if (aLast30Days === 0 && bLast30Days > 0) {
+      return -1;
+    } else if (aLast30Days > 0 && bLast30Days === 0) {
+      return 1;
+    } else if (aLast2Months < bLast2Months) {
+      return -1;
+    } else if (aLast2Months > bLast2Months) {
+      return 1;
+    } else if (aLast30Days < bLast30Days) {
+      return -1;
+    } else if (aLast30Days > bLast30Days) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
+}
+
+async function sendInvitations(bidders, jobPosting) {
+  const transporter = nodemailer.createTransport({
+    // configure email transporter options here
+    host: "smtp.example.com",
+    port: 587,
+    auth: {
+      user: "username",
+      pass: "password",
+    },
+  });
+
+  for (const bidder of bidders) {
+    await transporter.sendMail({
+      // configure email options here
+    });
+    bidder.invitationHistory.push({ date: Date.now(), job: jobPosting.id });
+    await bidder.save();
+  }
+}
 module.exports = router;
