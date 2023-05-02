@@ -1,3 +1,6 @@
+const Joi = require("joi");
+const mongoose = require("mongoose");
+
 const invitaionSchema = new mongoose.Schema({
   bidder: {
     type: mongoose.Schema.Types.ObjectId,

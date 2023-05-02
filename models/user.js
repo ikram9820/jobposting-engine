@@ -47,18 +47,9 @@ function validateUser(user) {
     name: Joi.string().min(2).max(50).required(),
     email: Joi.string().min(5).max(255).required().email(),
     password: Joi.string().min(5).max(255).required(),
-    dp: Joi.string().min(5).max(255),
-  });
-  return schema.validate(user);
-}
-function validateUpdateUser(user) {
-  const schema = Joi.object({
-    name: Joi.string().min(2).max(50).required(),
-    dp: Joi.string().min(5).max(255),
   });
   return schema.validate(user);
 }
 
 exports.User = User;
-exports.validateUpdate = validateUpdateUser;
 exports.validate = validateUser;

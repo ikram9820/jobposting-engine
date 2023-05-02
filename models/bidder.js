@@ -1,3 +1,6 @@
+const Joi = require("joi");
+const mongoose = require("mongoose");
+
 const STATUS = ["Invited", "Accepted", "Rejected"];
 const bidderSchema = new mongoose.Schema({
   user: {
