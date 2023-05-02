@@ -142,6 +142,10 @@ async function sendInvitations(bidders, jobPosting) {
   for (const bidder of bidders) {
     await transporter.sendMail({
       // configure email options here
+      from: "ikram9820khan@gmail.com",
+      to: bidder.user.email,
+      subject: "Invitation to Bid",
+      text: "Hello, you have been invited to bid on a job posting.",
     });
     bidder.invitationHistory.push({ date: Date.now(), job: jobPosting.id });
     await bidder.save();

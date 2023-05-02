@@ -20,3 +20,4 @@ router.get("/:id", async (req, res) => {
   if (!invitation) return res.status(404).send("Invitaion is not found.");
   return res.json(invitation);
 });
+module.exports = router;
