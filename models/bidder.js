@@ -1,7 +1,6 @@
 const Joi = require("joi");
 const mongoose = require("mongoose");
 
-const STATUS = ["Invited", "Accepted", "Rejected"];
 const bidderSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
@@ -10,16 +9,17 @@ const bidderSchema = new mongoose.Schema({
   },
   skills: [String],
   preferences: [String],
-  invitationHistory: [
+  invitations: [
     {
-      jobPostingId: {
+      job: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "JobPosting",
+        ref: "Job",
       },
       status: {
         type: String,
-        enum: STATUS,
+        enum: ["Invited, Accepted, Rejected"],
       },
+      date: Date,
     },
   ],
 });
@@ -28,15 +28,8 @@ const Bidder = mongoose.model("Bidder", bidderSchema);
 
 function validateBidder(bidder) {
   const schema = Joi.object({
-    user: Joi.objectId().required(),
     skills: Joi.array().items(Joi.string().lowercase().insensitive()),
     preferences: Joi.array().items(Joi.string().lowercase().insensitive()),
-    invitationHistory: Joi.array().items(
-      Joi.object({
-        jobPostingId: Joi.objectId(),
-        status: Joi.string().lowercase().valid(STATUS),
-      })
-    ),
   });
 
   return schema.validate(bidder);

@@ -1,7 +1,7 @@
 const Joi = require("joi");
 const mongoose = require("mongoose");
 
-const jobPostingSchema = new mongoose.Schema({
+const jobSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
@@ -10,20 +10,34 @@ const jobPostingSchema = new mongoose.Schema({
   title: String,
   description: String,
   requirements: [String],
+  bids: [
+    {
+      bidder: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Bidder",
+        required: true,
+      },
+      amount: { type: Number, required: true },
+      date: Date,
+    },
+  ],
+  date: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
-const JobPosting = mongoose.model("JobPosting", jobPostingSchema);
+const Job = mongoose.model("Job", jobSchema);
 
 function validateJobPosting(jobPosting) {
   const schema = Joi.object({
-    user: Joi.objectId().required(),
     title: Joi.string().required(),
-    description: Joi.string().required(),
+    description: Joi.string(),
     requirements: Joi.array().items(Joi.string().required()),
   });
 
   return schema.validate(jobPosting);
 }
 
-exports.JobPosting = JobPosting;
+exports.Job = Job;
 exports.validate = validateJobPosting;

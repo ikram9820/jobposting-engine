@@ -5,7 +5,7 @@ const router = express.Router();
 const { validate, User } = require("../models/user");
 
 router.get("/", async (req, res) => {
-  let users = await User.find().select(" -password -__v");
+  let users = await User.find().select("_id");
   res.send(users);
 });
 

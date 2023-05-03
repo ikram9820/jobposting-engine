@@ -6,9 +6,9 @@ const bidSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: "Bidder",
   },
-  jobPosting: {
+  job: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "JobPosting",
+    ref: "Job",
   },
   amount: Number,
 });
@@ -18,7 +18,7 @@ const Bid = mongoose.model("Bid", bidSchema);
 function validateBid(bid) {
   const schema = Joi.object({
     bidder: Joi.objectId().required(),
-    jobPosting: Joi.objectId().required(),
+    job: Joi.objectId().required(),
     amount: Joi.number().min(0).required(),
   });
 
