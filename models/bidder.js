@@ -9,19 +9,6 @@ const bidderSchema = new mongoose.Schema({
   },
   skills: [String],
   preferences: [String],
-  invitations: [
-    {
-      job: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Job",
-      },
-      status: {
-        type: String,
-        enum: ["Invited, Accepted, Rejected"],
-      },
-      date: Date,
-    },
-  ],
 });
 
 const Bidder = mongoose.model("Bidder", bidderSchema);

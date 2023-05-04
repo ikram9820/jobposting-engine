@@ -1,57 +1,58 @@
 const express = require("express");
 const auth = require("../middlewares/auth");
 const { Job, validate } = require("../models/job");
+const { Invitation } = require("../models/invitation");
 const admin = require("../middlewares/admin");
-const { sendInvitations, getMatchedBidders } = require("./helpers");
+const { sendInvitations } = require("./sendInvitations");
 const router = express.Router();
 
 router.get("/", [auth, admin], async (req, res) => {
-  let jobs = await Job.find().populate("user", "name email").lean().exec();
+  const jobs = await Job.find().populate("user", "name email").lean().exec();
   return res.status(200).json(jobs);
 });
 
 router.get("/:id", [auth, admin], async (req, res) => {
-  let job = await Job.findById(req.params.id)
+  const job = await Job.findById(req.params.id)
     .populate("user", "name email")
     .lean()
     .exec();
-  if (!job) return res.status(404).send("JobPosting is not found.");
+  if (!job) return res.status(404).send("Job is not found.");
   return res.json(job);
 });
 
-router.get("/:id/bids", [auth, admin], async (req, res) => {
-  let job = await Job.findById(req.params.id);
-  if (!job) return res.status(404).send("JobPosting is not found.");
-  return res.json(job.bids);
+router.get("/:id/bidders", async (req, res) => {
+  const bidders = await Invitation.find({ job: req.params.id }).select(
+    "bidder"
+  );
+  // .populate("bidder", "skills preferences")
+  // .lean()
+  // .exec();
+  // console.log(bidders);
+  const bidderList = bidders.flatMap((bidder) => bidder["bidder"]);
+
+  return res.json(bidderList);
 });
-router.get("/:id/bids/:id", [auth, admin], async (req, res) => {
+
+router.get("/:jobId/bidders/:bidderId", async (req, res) => {
+  const { bidderId, jobId } = req.params;
   console.log(req.params);
-  // let jobPosting = await JobPosting.findById(req.params.id);
-  // if (!jobPosting) return res.status(404).send("JobPosting is not found.");
-  // return res.json(jobPosting.bids);
+  const invitation = await Invitation.findOne({ bidder: bidderId, job: jobId });
+
+  if (!invitation) return res.status(404).send("bidder not found");
+  return res.json(invitation);
 });
 
 router.post("/", [auth, admin], async (req, res) => {
   const { error } = validate(req.body);
   if (error) return res.status(400).send(error.details[0].message);
-
-  const user = req.user._id;
-  const job = new Job({ user, ...req.body });
-  await job.save();
-
-  res.status(201).json(job);
-});
-
-router.post("/:id/invite", [auth, admin], async (req, res) => {
-  const jobId = req.params.id;
   try {
-    const Job = await Job.findById(jobId);
-    const matchedBidders = await getMatchedBidders(Job);
-    sendInvitations(matchedBidders, Job);
-    res.status(200).send("Invitations sent successfully");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error sending invitations");
+    const user = req.user._id;
+    const job = new Job({ user, ...req.body });
+    await job.save();
+    sendInvitations(job);
+    res.status(201).json(job);
+  } catch (ex) {
+    res.status(500).json("some thing wrong");
   }
 });
 

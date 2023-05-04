@@ -29,15 +29,15 @@ const jobSchema = new mongoose.Schema({
 
 const Job = mongoose.model("Job", jobSchema);
 
-function validateJobPosting(jobPosting) {
+function validateJob(job) {
   const schema = Joi.object({
     title: Joi.string().required(),
     description: Joi.string(),
     requirements: Joi.array().items(Joi.string().required()),
   });
 
-  return schema.validate(jobPosting);
+  return schema.validate(job);
 }
 
 exports.Job = Job;
-exports.validate = validateJobPosting;
+exports.validate = validateJob;
